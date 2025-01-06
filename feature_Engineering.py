@@ -4,41 +4,35 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler, PolynomialFeatur
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.feature_selection import VarianceThreshold
 
-# Define the column names for the dataset
 columns = [
     'Season', 'Age', 'Childish_Diseases', 'Accident_Trauma',
     'Surgical_Intervention', 'High_Fevers', 'Alcohol_Frequency',
     'Smoking_Habit', 'Sitting_Hours', 'Output'
 ]
 
-# Load the fertility dataset from a .txt file
 df = pd.read_csv('./dataset/fertility_Diagnosis.txt', header=None, names=columns)
 
 # Encode the dependent variable 'Output' into numerical format
 le = LabelEncoder()
 df['Output_Encoded'] = le.fit_transform(df['Output'])
 
-# Standardize/scale numeric features to have a mean of 0 and standard deviation of 1
+# scale numeric features to have a mean of 0 and standard deviation of 1
 scaler = StandardScaler()
 scaled_features = ['Age', 'Alcohol_Frequency', 'Sitting_Hours']
 df[scaled_features] = scaler.fit_transform(df[scaled_features])
 
 # Create interaction features by combining existing features
-# Multiplicative interaction between 'Age' and 'Sitting_Hours'
 df['Age_Sitting_Interaction'] = df['Age'] * df['Sitting_Hours']
-# Multiplicative interaction between 'Smoking_Habit' and 'Alcohol_Frequency'
 df['Smoking_Alcohol_Interaction'] = df['Smoking_Habit'] * df['Alcohol_Frequency']
-# Aggregate health risk score using binary variables
 df['Health_Risk_Score'] = (
     df['Childish_Diseases'] +
     df['Accident_Trauma'] +
     df['Surgical_Intervention'] +
-    abs(df['High_Fevers'])  # Convert High_Fevers to absolute values to handle negative values
+    abs(df['High_Fevers'])  
 )
 
 # Generate polynomial features up to degree 2 for selected features
 poly = PolynomialFeatures(degree=2, include_bias=False)
-# Modify the polynomial features section to avoid duplicate columns
 poly_features = ['Age', 'Sitting_Hours', 'Alcohol_Frequency']
 poly_matrix = poly.fit_transform(df[poly_features])
 poly_feature_names = [name for name in poly.get_feature_names_out(poly_features) 
