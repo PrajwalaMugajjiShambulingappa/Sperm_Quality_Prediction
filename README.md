@@ -30,3 +30,8 @@ This project aims to develop a machine learning solution for predicting sperm qu
 - seaborn
 - FastAPI
 - MLflow
+
+## Installation
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate

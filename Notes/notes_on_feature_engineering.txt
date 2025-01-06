@@ -1,0 +1,96 @@
+Input Data Format**
+- The original dataset consists of these columns for each row:
+['Season', 'Age', 'Childish_Diseases', 'Accident_Trauma', 'Surgical_Intervention',
+ 'High_Fevers', 'Alcohol_Frequency', 'Smoking_Habit', 'Sitting_Hours', 'Output']
+
+Step-by-Step Transformation:
+1. Encoding Output Variable (`Output`):
+   - The `Output` variable is encoded into a binary column `Output_Encoded` where:
+     - `N` (Normal fertility) → 0
+     - `O` (Altered fertility) → 1
+   - Result: The column `Output_Encoded` is added to the dataset.
+
+2. Feature Scaling (`Age`, `Alcohol_Frequency`, `Sitting_Hours`):
+   - These three columns are scaled using **StandardScaler** so that:
+     - Mean = 0, Standard Deviation = 1.
+   - Result: The values for `Age`, `Alcohol_Frequency`, and `Sitting_Hours` are scaled, and the dataset's original columns are replaced with these scaled values.
+
+3. Feature Engineering - Interaction Features:
+   - `Age_Sitting_Interaction`: `Age * Sitting_Hours` (combination of physiological and lifestyle effects)
+   - `Smoking_Alcohol_Interaction`: `Smoking_Habit * Alcohol_Frequency` (risks captured in one feature)
+   - `Health_Risk_Score`: Combined score of:
+       `Childish_Diseases + Accident_Trauma + Surgical_Intervention + High_Fevers`.
+   - Result: Three new columns are added: `Age_Sitting_Interaction`, `Smoking_Alcohol_Interaction`, and `Health_Risk_Score`.
+
+4. Polynomial Features:
+   Using PolynomialFeatures (degree=2) for three columns: `Age`, `Sitting_Hours`, and `Alcohol_Frequency`.
+   - Generates:
+     - Squared versions of the features: `Age^2`, `Sitting_Hours^2`, `Alcohol_Frequency^2`.
+     - Interaction terms: `Age*Sitting_Hours`, `Age*Alcohol_Frequency`, `Sitting_Hours*Alcohol_Frequency`.
+   - Result: Six new columns are added: `Age^2`, `Sitting_Hours^2`, `Alcohol_Frequency^2`, `Age * Sitting_Hours`, `Age * Alcohol_Frequency`, `Sitting_Hours * Alcohol_Frequency`.
+
+5. Categorical Encoding (`Season`):
+   - `Season` is one-hot encoded into binary columns: `Season_spring`, `Season_summer`, `Season_fall`, `Season_winter`.
+   - Result: Four new columns are added, representing the season as binary 0/1 values.
+
+6. Ordinal Mapping for `Smoking_Habit`:
+   - `Smoking_Habit` is mapped to ordinal values:
+     - -1 → 0 (Non-smoker)
+     -  0 → 1 (Occasional smoker)
+     -  1 → 2 (Daily smoker)
+   - A new column `Smoking_Ordinal` is added.
+   - Result: One new column is added (`Smoking_Ordinal`).
+
+7. Risk Probability using Boolean Conditions:
+   - A custom feature `Fertility_Risk_Probability` is created with the conditions being:
+     - `Smoking_Habit == 1` (Daily smoker).
+     - `Alcohol_Frequency > 0.7` (High alcohol usage).
+     - `Sitting_Hours > 0.7` (Prolonged sitting).
+     - `High_Fevers == -1` (Recent high fever).
+     - `Accident_Trauma == 1` (Trauma history).
+   - Result: A single column, `Fertility_Risk_Probability`, is added.
+
+8. Feature Selection:
+   - The top 8 features out of all the columns are selected using `SelectKBest` with an **ANOVA F-score**.
+   - The column subset remains based on how strongly the features influence the target (`Output_Encoded`).
+   - Result: Only the top 8 most predictive features remain in the final dataset.
+
+
+Final Transformed Dataset
+Post Feature Engineering, your dataset will contain a mixture of the original variables and the new features. Let’s summarize the columns:
+
+1. Original Columns (Transformed):
+   - `Season` → One-hot encoded → Adds: `Season_spring`, `Season_summer`, `Season_fall`, `Season_winter`.
+   - `Age`, `Alcohol_Frequency`, `Sitting_Hours` → Scaled.
+   - `Smoking_Habit` → Renamed as `Smoking_Ordinal` (mapped to ordinal values).
+   - `Output` → Encoded as `Output_Encoded` (binary).
+
+2. Engineered Features:
+   - Interaction Terms:
+     - `Age_Sitting_Interaction`
+     - `Smoking_Alcohol_Interaction`.
+   - Combined Risk Score:
+     - `Health_Risk_Score`.
+   - Polynomial Features:
+     - `Age^2`, `Sitting_Hours^2`, `Alcohol_Frequency^2`,
+     - `Age * Sitting_Hours`, `Age * Alcohol_Frequency`, `Sitting_Hours * Alcohol_Frequency`.
+   - Risk Probability:
+     - `Fertility_Risk_Probability`.
+
+3. Final Columns (After SelectKBest):
+   Using `SelectKBest`, only the top 8 most relevant features are kept. For example, these might be:
+   - `Health_Risk_Score`
+   - `Fertility_Risk_Probability`
+   - `Smoking_Ordinal`
+   - `Sitting_Hours^2`
+   - `Season_summer`
+   - `Age * Sitting_Hours`
+   - `Smoking_Alcohol_Interaction`
+   - `Age`.
+
+
+Here’s a mock preview of how a row would look after all transformations:
+| Season_spring | Age    | Alcohol_Frequency | Sitting_Hours | Smoking_Ordinal | Age_Sitting_Interaction | Age^2 | Fertility_Risk_Probability | ... |
+|---------------|--------|-------------------|---------------|-----------------|--------------------------|-------|----------------------------|-----|
+| 0             | -0.33  | 0.69              | -0.88         | 1               | 0.29                     | 0.11  | 0.8                        | ... |
+
